@@ -1,0 +1,32 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+data = pd.read_csv('LOS_ANGELES.csv')
+
+# Load the CSV file into a Pandas DataFrame
+df = data
+filename = "LOS_ANGELES.csv"
+df = pd.read_csv(filename)
+pd.set_option('display.max_columns', None)
+df.head(3)
+import pandas as pd
+
+# Load the CSV file into a DataFrame
+df = pd.read_csv('LOS_ANGELES.csv')
+
+# Convert DATE OCC column to datetime format
+df['DATE OCC'] = pd.to_datetime(df['DATE OCC'])
+
+# Convert datetime objects to Unix timestamps (in seconds)
+df['DATE OCC'] = df['DATE OCC'].astype('int64') // 10**9
+
+# Convert Unix timestamps to int32
+df['DATE OCC'] = df['DATE OCC'].astype('int32')
+
+# Print the first few rows of the DataFrame
+print(df.head())
+# Print the unique years in the data
+unique_years = pd.DatetimeIndex(df["DATE OCC"]).year.unique()
+print(unique_years)
+data.columns
