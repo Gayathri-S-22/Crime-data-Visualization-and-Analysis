@@ -1,0 +1,59 @@
+CHANGEPOINTS
+import pandas as pd
+import numpy as np
+from prophet import Prophet
+from sklearn.metrics import mean_squared_error
+from scipy.stats import spearmanr
+​
+# load the crime data for Los Angeles, Chicago, and San Francisco into separate DataFrames
+la_crime_data = pd.read_csv('LOS_ANGELES.csv')
+chicago_crime_data = pd.read_csv('chicago.csv')
+sf_crime_data = pd.read_csv('san fransisco.csv')
+​
+# convert date columns to datetime format
+la_crime_data['DATE OCC'] = pd.to_datetime(la_crime_data['DATE OCC'])
+chicago_crime_data['Date'] = pd.to_datetime(chicago_crime_data['Date'])
+sf_crime_data['Date'] = pd.to_datetime(sf_crime_data['Date'])
+​
+# group the data by date and count the number of incidents per day
+la_daily_counts = la_crime_data.groupby(la_crime_data['DATE OCC'].dt.date).size().reset_index(name='Incidents')
+chicago_daily_counts = chicago_crime_data.groupby(chicago_crime_data['Date'].dt.date).size().reset_index(name='Incidents')
+sf_daily_counts = sf_crime_data.groupby(sf_crime_data['Date'].dt.date).size().reset_index(name='Incidents')
+​
+# rename columns to fit Prophet's requirements
+la_daily_counts = la_daily_counts.rename(columns={'DATE OCC': 'ds', 'Incidents': 'y'})
+chicago_daily_counts = chicago_daily_counts.rename(columns={'Date': 'ds', 'Incidents': 'y'})
+sf_daily_counts = sf_daily_counts.rename(columns={'Date': 'ds', 'Incidents': 'y'})
+​
+# split the data into training and testing sets
+la_train = la_daily_counts.iloc[:-365]
+chicago_train = chicago_daily_counts.iloc[:-365]
+sf_train = sf_daily_counts.iloc[:-365]
+​
+la_test = la_daily_counts.iloc[-365:]
+chicago_test = chicago_daily_counts.iloc[-365:]
+sf_test = sf_daily_counts.iloc[-365:]
+​
+# define the different changepoint ranges to test
+changepoint_ranges = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+​
+# create an empty DataFrame to store the results
+results = pd.DataFrame(columns=['City', 'changepoint_range', 'RMSE', 'spearman_corr'])
+​
+# loop over the different cities and changepoint ranges and fit the Prophet model
+for city_name, city_data, city_test in [('Los Angeles', la_train, la_test), ('Chicago', chicago_train, chicago_test), ('San Francisco', sf_train, sf_test)]:
+    for changepoint_range in changepoint_ranges:
+        model = Prophet(changepoint_range=changepoint_range)
+        model.fit(city_data)
+​
+        # make predictions on the test set
+        forecast = model.predict(city_test)
+​
+        # calculate the root mean squared error and spearman correlation coefficient
+        rmse = np.sqrt(mean_squared_error(city_test['y'], forecast['yhat']))
+        spearman_corr = spearmanr(city_test['y'], forecast['yhat']).correlation
+​
+        # append the results to the DataFrame
+        results = results.append({'City': city_name, 'changepoint_range': changepoint_range, 'RMSE': rmse, 'spearman_corr': spearman_corr}, ignore_index=True)
+​
+print(results)
