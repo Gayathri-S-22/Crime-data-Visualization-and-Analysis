@@ -1,0 +1,179 @@
+FORECASTING GRAPH
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from prophet import Prophet
+​
+# Load data
+df = pd.read_csv('LOS_ANGELES.csv')
+df['DATE OCC'] = pd.to_datetime(df['DATE OCC'])
+df = df.groupby(pd.Grouper(key='DATE OCC', freq='D')).size().reset_index(name='Count')
+df = df.rename(columns={'DATE OCC': 'ds', 'Count': 'y'})
+​
+# Fit Prophet model
+model = Prophet(seasonality_mode='multiplicative')
+model.add_seasonality(name='monthly', period=30.5, fourier_order=5)
+model.add_seasonality(name='weekly', period=7, fourier_order=10)
+model.add_seasonality(name='daily', period=1, fourier_order=15)
+model.fit(df)
+​
+# Make predictions
+future = model.make_future_dataframe(periods=365)
+forecast = model.predict(future)
+​
+# Plot forecast
+fig, ax = plt.subplots(figsize=(10, 6))
+model.plot(forecast, ax=ax)
+ax.set_title('Los Angeles Crime Forecast', fontsize=16)
+ax.set_xlabel('Date', fontsize=12)
+ax.set_ylabel('Count', fontsize=12)
+plt.show()
+
+LSTM FORECASTING
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+!pip install keras 
+!pip install tensorflow
+from keras.models import Sequential
+from keras.layers import LSTM, Dense
+# Load data
+df = pd.read_csv('LOS_ANGELES.csv')
+df['DATE OCC'] = pd.to_datetime(df['DATE OCC'])
+df = df.groupby(pd.Grouper(key='DATE OCC', freq='D')).size().reset_index(name='Count')
+df = df.rename(columns={'DATE OCC': 'ds', 'Count': 'y'})
+df = df.set_index('ds')
+​
+# Prepare data for LSTM model
+train_size = int(len(df) * 0.8)
+train_data, test_data = df.iloc[:train_size], df.iloc[train_size:]
+scaler = MinMaxScaler()
+train_scaled = scaler.fit_transform(train_data)
+test_scaled = scaler.transform(test_data)
+​
+def prepare_data(timeseries_data, lookback):
+    X, y = [], []
+    for i in range(len(timeseries_data)-lookback-1):
+        a = timeseries_data[i:(i+lookback), 0]
+        X.append(a)
+        y.append(timeseries_data[i + lookback, 0])
+    return np.array(X), np.array(y)
+​
+lookback = 7
+X_train, y_train = prepare_data(train_scaled, lookback)
+X_test, y_test = prepare_data(test_scaled, lookback)
+X_train = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], 1))
+X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
+​
+# Build LSTM model
+model = Sequential()
+model.add(LSTM(50, activation='relu', input_shape=(lookback, 1)))
+model.add(Dense(1))
+model.compile(optimizer='adam', loss='mse')
+​
+# Train LSTM model
+history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test), verbose=2)
+​
+# Make predictions
+train_predict = model.predict(X_train)
+test_predict = model.predict(X_test)
+train_predict = scaler.inverse_transform(train_predict)
+y_train = scaler.inverse_transform([y_train])
+test_predict = scaler.inverse_transform(test_predict)
+y_test = scaler.inverse_transform([y_test])
+​
+# Plot forecast
+plt.plot(history.history['loss'], label='train')
+plt.plot(history.history['val_loss'], label='test')
+plt.xlabel('No of epochs')
+plt.ylabel('Loss Value')
+plt.legend()
+plt.show()
+​
+# Plot actual vs predicted
+plt.scatter(y_train[0], train_predict[:,0], label='Train')
+plt.scatter(y_test[0], test_predict[:,0], label='Test')
+plt.legend()
+plt.xlabel('Actual')
+plt.ylabel('Predicted')
+plt.show()
+
+ANN FORECASTING GRAPH
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+!pip install keras
+!pip install tensorflow
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, LSTM
+​
+# Load data
+df = pd.read_csv('LOS_ANGELES.csv')
+df['DATE OCC'] = pd.to_datetime(df['DATE OCC'])
+df = df.groupby(pd.Grouper(key='DATE OCC', freq='D')).size().reset_index(name='Count')
+df = df.rename(columns={'DATE OCC': 'ds', 'Count': 'y'})
+​
+# Scale the data
+scaler = MinMaxScaler(feature_range=(0, 1))
+scaled_data = scaler.fit_transform(df['y'].values.reshape(-1, 1))
+​
+# Split the data into training and testing sets
+train_data = scaled_data[:int(len(scaled_data)*0.8)]
+test_data = scaled_data[int(len(scaled_data)*0.8):]
+​
+# Create training and testing datasets
+def create_dataset(dataset, time_step=1):
+    X, Y = [], []
+    for i in range(len(dataset)-time_step-1):
+        a = dataset[i:(i+time_step), 0]
+        X.append(a)
+        Y.append(dataset[i+time_step, 0])
+    return np.array(X), np.array(Y)
+​
+time_step = 30
+X_train, y_train = create_dataset(train_data, time_step)
+X_test, y_test = create_dataset(test_data, time_step)
+​
+# Build the model
+model = Sequential()
+model.add(Dense(50, input_dim=time_step, activation='relu'))
+model.add(Dense(25, activation='relu'))
+model.add(Dropout(0.2))
+model.add(Dense(1))
+​
+# Compile the model
+model.compile(optimizer='adam', loss='mean_squared_error')
+​
+# Train the model
+history = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=100, batch_size=64, verbose=1)
+​
+# Make predictions
+train_predict = model.predict(X_train)
+test_predict = model.predict(X_test)
+​
+# Invert the scaling
+train_predict = scaler.inverse_transform(train_predict)
+y_train = scaler.inverse_transform([y_train])
+test_predict = scaler.inverse_transform(test_predict)
+y_test = scaler.inverse_transform([y_test])
+​
+# Plot the predictions
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(y_test[0], label='Actual')
+ax.plot(test_predict[:, 0], label='Predicted')
+ax.set_title('Los Angeles Crime Forecast using ANN', fontsize=16)
+ax.set_xlabel('Time', fontsize=12)
+ax.set_ylabel('Count', fontsize=12)
+plt.legend()
+plt.show()
+# Plot actual vs predicted
+plt.scatter(y_train[0], train_predict[:,0], label='Train')
+plt.scatter(y_test[0], test_predict[:,0], label='Test')
+plt.legend()
+plt.xlabel('Actual')
+plt.ylabel('Predicted')
+plt.show()
+
+
