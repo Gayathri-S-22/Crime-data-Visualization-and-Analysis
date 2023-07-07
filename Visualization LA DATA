@@ -1,0 +1,361 @@
+VISUALIZATION
+TIME SERIES PLOT
+import pandas as pd
+import matplotlib.pyplot as plt
+​
+# Load the CSV file into a DataFrame
+la_data = pd.read_csv('LOS_ANGELES.csv')
+​
+# Convert the 'DATE OCC' column to a datetime object
+la_data['DATE OCC'] = pd.to_datetime(la_data['DATE OCC'])
+arrests_per_year_l = la_data.groupby(la_data['DATE OCC'].dt.month)['Status Desc'].count()
+​
+plt.figure(figsize=(10, 5))
+plt.plot(arrests_per_year_l.index, arrests_per_year_l.values, label='Los Angeles')
+plt.xlabel('Date')
+plt.ylabel('Number of Arrests')
+plt.title('Crime Time Series')
+plt.legend()
+plt.show()
+# Filter the data for the relevant time period
+start_date = '2016-01-01'
+end_date = '2018-12-31'
+filtered_data = la_data[(la_data['DATE OCC'] >= start_date) & (la_data['DATE OCC'] <= end_date)]
+
+# Group the data by 'Status Desc' and count the number of arrests
+arrests_per_status = filtered_data.groupby('Status Desc')['DR_NO'].count()
+
+# Print the results
+print(arrests_per_status)
+# Filter the data for the relevant time period
+start_date = '2016-01-01'
+end_date = '2018-12-31'
+filtered_data = la_data[(la_data['DATE OCC'] >= start_date) & (la_data['DATE OCC'] <= end_date)]
+
+# Group the data by 'Status Desc' and count the number of arrests
+arrests_per_status = filtered_data.groupby('Status Desc')['DR_NO'].count()
+
+# Print the results
+print(arrests_per_status)
+# Filter the data for the relevant time period
+start_date = '2016-01-01'
+end_date = '2018-12-31'
+filtered_data = la_data[(la_data['DATE OCC'] >= start_date) & (la_data['DATE OCC'] <= end_date)]
+
+# Group the data by 'Status Desc' and count the number of arrests
+arrests_per_status = filtered_data.groupby('Status Desc')['DR_NO'].count()
+
+# Print the results
+print(arrests_per_status)
+juvenile_arrests = la_data[la_data['Vict Age'] < 18]['DR_NO'].count()
+adult_arrests = la_data[la_data['Vict Age'] >= 18]['DR_NO'].count()
+
+# Print the results
+print(f"Number of juvenile arrests in LA: {juvenile_arrests}")
+print(f"Number of adult arrests in LA: {adult_arrests}")
+
+Crime time series
+import pandas as pd
+import matplotlib.pyplot as plt
+​
+# Load the CSV file into a DataFrame
+la_data = pd.read_csv('LOS_ANGELES.csv')
+​
+# Convert the 'DATE OCC' column to a datetime object
+la_data['DATE OCC'] = pd.to_datetime(la_data['DATE OCC'])
+​
+invest_con = la_data[la_data['Status Desc'] == 'Invest Cont']
+juv_arrest = la_data[la_data['Status Desc'] == 'Juv Arrest']
+adult_arrest = la_data[la_data['Status Desc'] == 'Adult Arrest']
+adult_other = la_data[la_data['Status Desc'] == 'Adult Other']
+​
+# Group by year and count the number of occurrences for each type
+invest_con_ts = invest_con.groupby(invest_con['DATE OCC'].dt.year)['DR_NO'].count()
+juv_arrest_ts = juv_arrest.groupby(juv_arrest['DATE OCC'].dt.year)['DR_NO'].count()
+adult_arrest_ts = adult_arrest.groupby(adult_arrest['DATE OCC'].dt.year)['DR_NO'].count()
+adult_other_ts = adult_other.groupby(adult_other['DATE OCC'].dt.year)['DR_NO'].count()
+​
+# Plot the time series
+plt.figure(figsize=(10, 5))
+plt.plot(invest_con_ts.index, invest_con_ts.values, label='Invest Cont')
+plt.plot(juv_arrest_ts.index, juv_arrest_ts.values, label='Juv Arrest')
+plt.plot(adult_arrest_ts.index, adult_arrest_ts.values, label='Adult Arrest')
+plt.plot(adult_other_ts.index, adult_other_ts.values, label='Adult Other')
+plt.xlabel('Year')
+plt.ylabel('Number of Crimes')
+plt.title('Crime Time Series by Resolution Type')
+plt.legend()
+plt.show()
+
+Pie chart
+import pandas as pd
+​
+# Load the CSV file into a DataFrame
+la_data = pd.read_csv('LOS_ANGELES.csv')
+​
+# Get distinct values in the 'Status Desc' column
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# create a dictionary to map categories to groups
+category_groups = {
+    'THEFT OF IDENTITY': 'Identity Theft',
+    'VEHICLE - STOLEN': 'Vehicle Theft',
+    'BURGLARY FROM VEHICLE': 'Vehicle Burglary',
+    'BURGLARY': 'Burglary',
+    'THEFT PLAIN - PETTY ($950 & UNDER)': 'Petty Theft',
+    'ROBBERY': 'Robbery',
+    'THEFT-GRAND ($950.01 & OVER)EXCPT,GUNS,FOWL,LIVESTK,PROD0036': 'Grand Theft',
+    'SHOPLIFTING-GRAND THEFT ($950.01 & OVER)': 'Grand Theft',
+    'THEFT FROM MOTOR VEHICLE - GRAND ($400 AND OVER)': 'Vehicle Burglary',
+    'THEFT-GRAND': 'Grand Theft',
+    'THEFT FROM MOTOR VEHICLE - PETTY ($950 & UNDER)': 'Vehicle Burglary',
+    'THEFT OF TRUCK OR TRAILER': 'Vehicle Theft',
+    'THEFT, PERSON': 'Person Theft',
+    'THEFT FROM PERSON': 'Person Theft',
+    'THEFT OF COMPUTERS': 'Computer Theft',
+    'THEFT OF TELEPHONE/COMMUNICATIONS EQUIPMENT': 'Communication Theft',
+    'THEFT OF DRUGS': 'Drug Theft',
+    'BIKE - STOLEN': 'Bike Theft',
+    'THEFT FROM AUTO': 'Vehicle Burglary',
+    'BURGLARY, ATTEMPTED': 'Burglary',
+    'ATTEMPTED ROBBERY': 'Robbery'
+}
+
+# create a new column in the DataFrame that maps categories to groups
+la_data['Category Group'] = la_data['Crm Cd Desc'].map(category_groups).fillna(la_data['Crm Cd Desc'])
+
+# perform value counts on the new column
+grouped_counts = la_data['Category Group'].value_counts(normalize=True)
+
+# set threshold percentage for inclusion in chart
+threshold_pct = 1
+
+# filter out groups below threshold
+other_pct = 0
+other_count = 0
+filtered_counts = {}
+for group, pct in grouped_counts.iteritems():
+    if pct >= threshold_pct / 100:
+        filtered_counts[group] = pct
+    else:
+        other_pct += pct
+        other_count += la_data['Category Group'].value_counts()[group]
+filtered_counts['Other'] = other_pct
+other_label = 'Other ({0:.1f}% - {1} thefts)'.format(other_pct * 100, other_count)
+
+distinct_statuses = la_data['Crm Cd Desc'].unique()
+print(distinct_statuses)
+plt.figure(figsize=(15,15))
+plt.pie(filtered_counts.values(), labels=filtered_counts.keys(), autopct='%1.1f%%')
+plt.title('Theft Category Distribution')
+plt.legend([other_label], loc='lower left')
+plt.show()
+
+#HOURLY TRREND
+import pandas as pd
+import matplotlib.pyplot as plt
+​
+# Load LA crime data
+la_data = pd.read_csv('LOS_ANGELES.csv')
+​
+# Drop rows where TIME OCC is equal to 1
+la_data = la_data[la_data['TIME OCC'] != 1]
+la_data = la_data[la_data['TIME OCC'] != 2]
+la_data = la_data[la_data['TIME OCC'] != 3]
+la_data = la_data[la_data['TIME OCC'] != 4]
+la_data = la_data[la_data['TIME OCC'] != 5]
+la_data = la_data[la_data['TIME OCC'] != 6]
+la_data = la_data[la_data['TIME OCC'] != 7]
+la_data = la_data[la_data['TIME OCC'] != 8]
+la_data = la_data[la_data['TIME OCC'] != 9]
+# Convert time column to datetime format and extract hour in military time
+la_data['Hour'] = pd.to_datetime(la_data['TIME OCC'], format='%H%M').dt.hour
+​
+# Count number of incidents for each hour
+hourly_counts = la_data['Hour'].value_counts().sort_index()
+​
+# Plot hourly trend
+plt.plot(hourly_counts.index, hourly_counts.values)
+plt.title('Hourly Trend of LA Incidents')
+plt.xlabel('Hour of the Day')
+plt.ylabel('Number of Incidents')
+plt.show()
+
+WORD CLOUD
+import pandas as pd
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+pd.set_option('display.max_columns', None)
+# concatenate all crime types into a single string
+text = ' '.join(la_data['Crm Cd Desc'].tolist())
+​
+# create a WordCloud object and generate the word cloud
+wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+​
+# plot the word cloud using matplotlib
+plt.figure(figsize=(12, 6))
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis('off')
+plt.show()
+
+BOX PLOT
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+​
+# Load LA crime data
+la_data = pd.read_csv('LOS_ANGELES.csv')
+​
+# Convert 'Date' column to datetime and extract month
+la_data['Date'] = pd.to_datetime(la_data['DATE OCC'])
+la_data['Month'] = la_data['Date'].dt.month_name()
+​
+# Group by month and count occurrences
+monthly_counts = la_data.groupby('Month').count()['DR_NO']
+​
+# Create a new dataframe with month and count data
+monthly_data = pd.DataFrame({'Month': monthly_counts.index, 'Count': monthly_counts.values})
+​
+# Sort by month
+monthly_data = monthly_data.sort_values(by='Month')
+​
+# Create a new figure with a size of 10x6 inches
+plt.figure(figsize=(10, 6))
+​
+# Create a boxplot using Seaborn
+sns.boxplot(x='Month', y='Count', data=monthly_data, color='blue',
+            width=0.9, linewidth=3, fliersize=3)
+​
+# Add individual data points with a stripplot
+sns.stripplot(x='Month', y='Count', data=monthly_data, color='black',
+              alpha=0.5, jitter=0.3)
+​
+# Add a title and axis labels
+plt.title('Monthly Crime Counts in Los Angeles')
+plt.xlabel('Month')
+plt.ylabel('Count')
+​
+# Rotate the x-axis labels for better visibility
+plt.xticks(rotation=45)
+​
+# Show the plot
+plt.show()
+
+Marker cluster
+import pandas as pd
+import folium
+from folium.plugins import MarkerCluster
+​
+# Load the LA crime data
+df = pd.read_csv('LOS_ANGELES.csv')
+​
+# Drop the rows with NaN values in LAT or LON columns
+df = df.dropna(subset=['LAT', 'LON'])
+​
+# Create a map centered on LA
+la_map = folium.Map(location=[34.0522, -118.2437], zoom_start=10)
+​
+# Create a MarkerCluster layer
+marker_cluster = MarkerCluster().add_to(la_map)
+​
+# Add markers for each crime incident to the MarkerCluster layer
+for index, row in df.iterrows():
+    folium.Marker(location=[row['LAT'], row['LON']]).add_to(marker_cluster)
+​
+# Display the map
+la_map
+​
+TOP 10
+​
+import pandas as pd
+import matplotlib.pyplot as plt
+​
+# Import the Los Angeles crime dataset
+la_crime_df = pd.read_csv('LOS_ANGELES.csv')
+​
+# Convert the date column to a datetime object
+la_crime_df['DATE OCC'] = pd.to_datetime(la_crime_df['DATE OCC'])
+​
+# Group the data by date and count the number of incidents
+crime_by_date = la_crime_df.groupby('DATE OCC').size().reset_index(name='Incidents')
+​
+# Sort the data by the number of incidents in descending order
+sorted_crime_by_date = crime_by_date.sort_values(by='Incidents', ascending=False)
+​
+# Plot the top 10 dates with the most crimes
+top_10_dates = sorted_crime_by_date.head(10)
+fig, ax = plt.subplots()
+ax.pie(top_10_dates['Incidents'], labels=top_10_dates['DATE OCC'], autopct='%1.1f%%', startangle=90, counterclock=False, wedgeprops={'width':0.5})
+ax.set_title('Top 10 Dates with Most Crimes')
+plt.show()
+​
+# Plot the top 10 dates with the least crimes
+bottom_10_dates = sorted_crime_by_date.tail(10)
+fig, ax = plt.subplots()
+ax.pie(bottom_10_dates['Incidents'], labels=bottom_10_dates['DATE OCC'], autopct='%1.1f%%', startangle=90, counterclock=False, wedgeprops={'width':0.5})
+ax.set_title('Top 10 Dates with Least Crimes')
+plt.show()
+​
+import pandas as pd
+import folium
+from folium.plugins import MarkerCluster
+
+# Load the LA crime data
+df = pd.read_csv('LOS_ANGELES.csv')
+
+# Drop the rows with NaN values in LAT or LON columns
+df = df.dropna(subset=['LAT', 'LON'])
+
+# Create a map centered on LA
+la_map = folium.Map(location=[34.0522, -118.2437], zoom_start=10)
+
+# Create a MarkerCluster layer
+marker_cluster = MarkerCluster().add_to(la_map)
+
+# Add markers for each crime incident to the MarkerCluster layer
+for index, row in df.iterrows():
+    folium.Marker(location=[row['LAT'], row['LON']]).add_to(marker_cluster)
+
+# Display the map
+la_map
+DECOMPOSED TIME SERIES
+import pandas as pd
+import matplotlib.pyplot as plt
+from statsmodels.tsa.seasonal import seasonal_decompose
+​
+# Load the Los Angeles crime dataset into a pandas dataframe
+df = pd.read_csv('LOS_ANGELES.csv')
+​
+# Convert the 'DATE OCC' column to a datetime format
+df['DATE OCC'] = pd.to_datetime(df['DATE OCC'])
+​
+# Create a new dataframe with the count of incidents by day
+daily_count = df.groupby(pd.Grouper(key='DATE OCC', freq='D')).size().reset_index(name='Count')
+​
+# Set the 'DATE OCC' column as the index of the dataframe
+daily_count = daily_count.set_index('DATE OCC')
+​
+# Perform seasonal decomposition on the daily crime count data
+decomposition = seasonal_decompose(daily_count['Count'], model='additive', period=365)
+​
+# Plot the decomposed data
+fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(10, 8))
+​
+ax1.set_title('Observed')
+daily_count.plot(ax=ax1, y='Count')
+​
+ax2.set_title('Trend')
+decomposition.trend.plot(ax=ax2)
+​
+ax3.set_title('Seasonal')
+decomposition.seasonal.plot(ax=ax3)
+​
+ax4.set_title('Residual')
+decomposition.resid.plot(ax=ax4)
+​
+plt.tight_layout()
+plt.show()
+
+
+​
